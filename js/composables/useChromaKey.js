@@ -58,8 +58,9 @@ void main() {
   float dist = distance(yuvP.yz, yuvK.yz);
   float alpha = smoothstep(u_inner, u_outer, dist);
 
+  // only despill near keyed edges; fully opaque pixels are untouched
   float spill = max(col.g - max(col.r, col.b), 0.0);
-  col.g -= spill * u_despill;
+  col.g -= spill * u_despill * (1.0 - alpha);
 
   gl_FragColor = vec4(col.rgb, alpha);
 }`

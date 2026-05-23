@@ -1,4 +1,4 @@
-import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import CaptureControls from './CaptureControls.js'
 import { useCamera } from '../composables/useCamera.js'
 import { useChromaKey } from '../composables/useChromaKey.js'
@@ -56,21 +56,27 @@ export default defineComponent({
       return {}
     })
 
-    function syncResolution() {
-      if (!glCanvas.value) return
-      const r = store.state.ratio
-      const longSide = 720
-      const aspect   = r.w / r.h
-      const w = aspect >= 1 ? longSide             : Math.round(longSide * aspect)
-      const h = aspect >= 1 ? Math.round(longSide / aspect) : longSide
-      chroma.resize(w, h)
-    }
+    let resizeObserver = null
 
-    watch(() => store.state.ratio, syncResolution)
+    function setCanvasResolution() {
+      const el = glCanvas.value
+      if (!el) return
+      const dpr = window.devicePixelRatio || 1
+      const w = Math.round(el.clientWidth  * dpr)
+      const h = Math.round(el.clientHeight * dpr)
+      if (w > 0 && h > 0) {
+        el.width  = w
+        el.height = h
+        chroma.resize(w, h)
+      }
+    }
 
     onMounted(async () => {
       await nextTick()
-      syncResolution()
+      setCanvasResolution()
+      resizeObserver = new ResizeObserver(setCanvasResolution)
+      resizeObserver.observe(glCanvas.value)
+
       await camera.start(video.value)
       if (camera.isReady.value) {
         try { chroma.init(glCanvas.value, video.value) }
@@ -79,6 +85,7 @@ export default defineComponent({
     })
 
     onUnmounted(() => {
+      resizeObserver?.disconnect()
       chroma.dispose()
       camera.stop()
     })
