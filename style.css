@@ -156,6 +156,66 @@ h3 { margin: 18px 0 10px; font-size: 15px; color: #555; font-weight: 600; }
 .bg-upload-icon { font-size: 28px; font-weight: 300; line-height: 1; }
 .bg-upload-text { font-size: 12px; }
 
+/* ── Crop Modal ───────────────────────────────────── */
+.crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.crop-modal {
+  background: white;
+  border-radius: 14px;
+  padding: 22px 20px 20px;
+  max-width: 560px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.crop-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.crop-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.crop-frame {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  background: #000;
+}
+.crop-frame:active { cursor: grabbing; }
+
+.crop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  display: block;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 /* ── CameraStage ──────────────────────────────────── */
 .camera-stage {
   display: flex;
