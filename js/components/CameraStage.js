@@ -23,10 +23,11 @@ export default defineComponent({
                :src="store.state.background.value"
                class="stage-bg"
                alt="" />
-          <canvas ref="glCanvas" class="stage-canvas"></canvas>
+          <canvas ref="glCanvas" class="stage-canvas" @click="onPickColor"></canvas>
           <video  ref="video" autoplay muted playsinline class="stage-video"></video>
           <div class="stage-crop-guide"></div>
         </div>
+        <p class="stage-pick-tip">👆 點擊畫面上的綠幕區域可校正去背顏色</p>
         <div v-if="cameraError" class="stage-error">⚠️ {{ cameraError }}</div>
       </div>
 
@@ -103,6 +104,13 @@ export default defineComponent({
       emit('captured')
     }
 
-    return { store, glCanvas, video, chroma, cameraError, ready, stageStyle, bgStyle, onCapture }
+    function onPickColor(e) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top)  / rect.height
+      chroma.pickColorAt(x, y)
+    }
+
+    return { store, glCanvas, video, chroma, cameraError, ready, stageStyle, bgStyle, onCapture, onPickColor }
   }
 })

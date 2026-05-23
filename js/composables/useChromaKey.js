@@ -92,6 +92,37 @@ export function useChromaKey() {
 
   let gl, prog, tex, rafId, loc = {}
   let _canvas, _video
+  let _picker, _pickerCtx
+
+  function pickColorAt(normCanvasX, normCanvasY) {
+    if (!_video || !_video.videoWidth) return
+    if (!_picker) {
+      _picker = document.createElement('canvas')
+      _picker.width = 8; _picker.height = 8
+      _pickerCtx = _picker.getContext('2d', { willReadFrequently: true })
+    }
+    // 1) canvas 點擊座標 → shader 內 v_uv (Y 翻轉)
+    let uvX = normCanvasX
+    let uvY = 1 - normCanvasY
+    // 2) 套用 coverUV 的反推
+    const va = _video.videoWidth / _video.videoHeight
+    const ca = _canvas.width / _canvas.height
+    if (va > ca) { const s = ca / va; uvX = 0.5 + (uvX - 0.5) * s }
+    else         { const s = va / ca; uvY = 0.5 + (uvY - 0.5) * s }
+    // 3) UV → video 像素座標 (Y 再翻回 top-down)
+    const region = 24
+    const cx = Math.round(uvX * _video.videoWidth)
+    const cy = Math.round((1 - uvY) * _video.videoHeight)
+    const sx = Math.max(0, cx - region / 2)
+    const sy = Math.max(0, cy - region / 2)
+    _pickerCtx.clearRect(0, 0, 8, 8)
+    _pickerCtx.drawImage(_video, sx, sy, region, region, 0, 0, 8, 8)
+    const data = _pickerCtx.getImageData(0, 0, 8, 8).data
+    let r = 0, g = 0, b = 0
+    for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2] }
+    const n = data.length / 4
+    params.keyColor = [r / n / 255, g / n / 255, b / n / 255]
+  }
 
   function init(canvas, video) {
     _canvas = canvas
@@ -184,5 +215,5 @@ export function useChromaKey() {
     gl = prog = tex = _canvas = _video = null
   }
 
-  return { params, init, resize, render, dispose }
+  return { params, init, resize, render, pickColorAt, dispose }
 }
