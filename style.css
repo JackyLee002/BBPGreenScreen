@@ -193,8 +193,8 @@ h3 { margin: 18px 0 10px; font-size: 15px; color: #555; font-weight: 600; }
 .stage {
   position: relative;
   width: 100%;
-  max-width: 720px;
-  max-height: 65vh;
+  max-width: 100%;
+  max-height: 75vh;
   background: #0b0d0f;
   border-radius: 10px;
   overflow: hidden;
