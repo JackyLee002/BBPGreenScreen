@@ -96,7 +96,7 @@ export function useChromaKey() {
   function init(canvas, video) {
     _canvas = canvas
     _video  = video
-    gl = canvas.getContext('webgl', { premultipliedAlpha: false, alpha: true })
+    gl = canvas.getContext('webgl', { premultipliedAlpha: false, alpha: true, preserveDrawingBuffer: true })
     if (!gl) throw new Error('此瀏覽器不支援 WebGL')
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
