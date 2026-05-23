@@ -16,7 +16,10 @@ export function useCompositor() {
   }
 
   function drawBg(ctx, bg, w, h) {
-    if (!bg) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); return }
+    // 先用白色打底，避免任何分支都漏畫造成整張透明
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, w, h)
+    if (!bg) return
     if (bg.type === 'color') {
       ctx.fillStyle = bg.value
       ctx.fillRect(0, 0, w, h)

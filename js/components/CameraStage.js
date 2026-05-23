@@ -91,6 +91,8 @@ export default defineComponent({
     })
 
     function onCapture() {
+      // 在 drawImage 讀取前強制同步渲染，避免 WebGL framebuffer 與 2D ctx 之間的時序問題
+      chroma.render()
       const url = comp.capture({
         chromaCanvas: glCanvas.value,
         background: store.state.background,

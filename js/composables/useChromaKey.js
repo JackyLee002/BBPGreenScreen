@@ -144,9 +144,8 @@ export function useChromaKey() {
     rafId = requestAnimationFrame(loop)
   }
 
-  function loop() {
-    rafId = requestAnimationFrame(loop)
-    if (!gl || !_video || _video.readyState < 2 || !_video.videoWidth) return
+  function render() {
+    if (!gl || !_video || _video.readyState < 2 || !_video.videoWidth) return false
 
     gl.viewport(0, 0, _canvas.width, _canvas.height)
     gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -162,6 +161,13 @@ export function useChromaKey() {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLES, 0, 6)
+    gl.finish()
+    return true
+  }
+
+  function loop() {
+    rafId = requestAnimationFrame(loop)
+    render()
   }
 
   function resize(w, h) {
@@ -178,5 +184,5 @@ export function useChromaKey() {
     gl = prog = tex = _canvas = _video = null
   }
 
-  return { params, init, resize, dispose }
+  return { params, init, resize, render, dispose }
 }
