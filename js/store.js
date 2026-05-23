@@ -8,18 +8,14 @@ export const ratios = [
   { label: '9:16', w: 9,  h: 16, hint: '手機直式' }
 ]
 
-export const presetBackgrounds = [
-  { id: 'white',  type: 'color',    value: '#ffffff', label: '純白' },
-  { id: 'black',  type: 'color',    value: '#111111', label: '純黑' },
-  { id: 'pink',   type: 'color',    value: '#f4c2c2', label: '粉紅' },
-  { id: 'sky',    type: 'color',    value: '#a8d8ea', label: '天藍' },
-  { id: 'sunset', type: 'gradient', value: 'linear-gradient(135deg, #ffb88c, #de6262)', label: '夕陽' },
-  { id: 'ocean',  type: 'gradient', value: 'linear-gradient(180deg, #43cea2, #185a9d)', label: '海洋' }
+// 預設背景圖來源（點擊後進裁切 modal）
+export const presetSources = [
+  { id: 'bg-300', src: 'img/300.jpg', label: '背景1' }
 ]
 
 const state = reactive({
   ratio: ratios[0],
-  background: presetBackgrounds[0],
+  background: null,
   customBackgrounds: [],
   capturedDataUrl: null,
   stage: 'setup'
@@ -29,7 +25,7 @@ export function useStore() {
   return {
     state,
     ratios,
-    presetBackgrounds,
+    presetSources,
     setRatio(r)  { state.ratio = r },
     setBackground(bg) { state.background = bg },
     addCustomBackground(bg) {

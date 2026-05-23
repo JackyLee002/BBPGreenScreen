@@ -6,17 +6,30 @@ export default defineComponent({
   template: `
     <div>
       <div class="bg-picker">
+        <!-- 預設圖片來源：點擊開裁切 modal -->
         <button
-          v-for="bg in allBackgrounds"
-          :key="bg.id || bg.value"
+          v-for="src in store.presetSources"
+          :key="src.id"
+          class="bg-card"
+          :style="{ backgroundImage: 'url(' + src.src + ')', backgroundSize: 'cover', backgroundPosition: 'center' }"
+          @click="openPresetCrop(src)"
+        >
+          <span class="bg-card-label">{{ src.label }}</span>
+        </button>
+
+        <!-- 已裁切的自訂背景：直接選取 -->
+        <button
+          v-for="bg in store.state.customBackgrounds"
+          :key="bg.id"
           class="bg-card"
           :class="{ active: isSelected(bg) }"
-          :style="bgCardStyle(bg)"
+          :style="{ backgroundImage: 'url(' + bg.value + ')', backgroundSize: 'cover', backgroundPosition: 'center' }"
           @click="store.setBackground(bg)"
         >
           <span class="bg-card-label">{{ bg.label }}</span>
         </button>
 
+        <!-- 上傳自訂圖片 -->
         <label class="bg-card bg-upload" title="上傳自訂背景">
           <input type="file" accept="image/*" style="display:none" @change="onUpload" />
           <span class="bg-upload-icon">+</span>
@@ -36,7 +49,7 @@ export default defineComponent({
                @touchstart.prevent="onTouchStart"
                @mousemove="onMouseMove"
                @touchmove.prevent="onTouchMove">
-            <img :src="crop.dataUrl" class="crop-img" draggable="false"
+            <img :src="crop.previewSrc" class="crop-img" draggable="false"
                  :style="{ objectPosition: crop.offsetX + '% ' + crop.offsetY + '%' }" />
           </div>
           <div class="crop-actions">
@@ -52,15 +65,12 @@ export default defineComponent({
     const frameRef = ref(null)
     const ratio = computed(() => store.state.ratio)
 
-    const allBackgrounds = computed(() => [
-      ...store.presetBackgrounds,
-      ...store.state.customBackgrounds
-    ])
-
     const crop = reactive({
       open: false,
-      dataUrl: '',
-      img: null,
+      previewSrc: '',   // 給 <img> 顯示用（路徑或 dataURL）
+      img: null,        // 給 drawImage 用的 HTMLImageElement
+      label: '',
+      isUpload: false,  // true = 上傳的新圖，確認後加入自訂清單
       offsetX: 50,
       offsetY: 50,
       dragging: false,
@@ -70,18 +80,26 @@ export default defineComponent({
 
     function isSelected(bg) {
       const cur = store.state.background
-      if (!cur) return false
-      if (bg.id && cur.id) return bg.id === cur.id
-      return cur.value === bg.value
+      if (!cur || !cur.id || !bg.id) return false
+      return cur.id === bg.id
     }
 
-    function bgCardStyle(bg) {
-      if (bg.type === 'color')    return { background: bg.value }
-      if (bg.type === 'gradient') return { background: bg.value }
-      if (bg.type === 'image')    return { backgroundImage: `url(${bg.value})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-      return {}
+    // 預設圖片點擊
+    function openPresetCrop(source) {
+      const img = new Image()
+      img.onload = () => {
+        crop.img = img
+        crop.previewSrc = source.src
+        crop.label = source.label
+        crop.isUpload = false
+        crop.offsetX = 50
+        crop.offsetY = 50
+        crop.open = true
+      }
+      img.src = source.src
     }
 
+    // 上傳圖片
     function onUpload(e) {
       const file = e.target.files?.[0]
       if (!file) return
@@ -90,7 +108,9 @@ export default defineComponent({
         const img = new Image()
         img.onload = () => {
           crop.img = img
-          crop.dataUrl = reader.result
+          crop.previewSrc = reader.result
+          crop.label = '自訂'
+          crop.isUpload = true
           crop.offsetX = 50
           crop.offsetY = 50
           crop.open = true
@@ -101,6 +121,7 @@ export default defineComponent({
       e.target.value = ''
     }
 
+    // 拖曳邏輯
     function applyDelta(clientX, clientY) {
       if (!crop.dragging || !frameRef.value || !crop.img) return
       const dx = clientX - crop.lastX
@@ -114,7 +135,6 @@ export default defineComponent({
       const imgA = crop.img.naturalWidth / crop.img.naturalHeight
       const conA = cw / ch
 
-      // 只有圖比 frame 大的那個方向才可拖
       if (imgA > conA) {
         const overflow = ch * imgA - cw
         if (overflow > 0)
@@ -132,6 +152,7 @@ export default defineComponent({
     function onTouchMove(e)  { const t = e.touches[0]; applyDelta(t.clientX, t.clientY) }
     function onDragEnd()     { crop.dragging = false }
 
+    // 確認裁切
     function confirmCrop() {
       const r = store.state.ratio
       const aspect = r.w / r.h
@@ -160,21 +181,28 @@ export default defineComponent({
       const croppedUrl = canvas.toDataURL('image/jpeg', 0.92)
       const croppedImg = new Image()
       croppedImg.onload = () => {
-        store.addCustomBackground({
-          id: `custom-${Date.now()}`,
+        const bg = {
+          id: `bg-${Date.now()}`,
           type: 'image',
           value: croppedUrl,
           image: croppedImg,
-          label: '自訂'
-        })
+          label: crop.label
+        }
+        if (crop.isUpload) {
+          // 上傳的圖：加入自訂清單並選取
+          store.addCustomBackground(bg)
+        } else {
+          // 預設圖：直接設為背景（不加入清單）
+          store.setBackground(bg)
+        }
       }
       croppedImg.src = croppedUrl
       crop.open = false
     }
 
     return {
-      store, frameRef, ratio, allBackgrounds, crop,
-      isSelected, bgCardStyle, onUpload,
+      store, frameRef, ratio, crop, isSelected,
+      openPresetCrop, onUpload,
       onDragStart, onMouseMove, onTouchStart, onTouchMove, onDragEnd,
       confirmCrop
     }

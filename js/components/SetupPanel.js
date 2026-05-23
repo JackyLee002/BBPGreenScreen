@@ -30,7 +30,7 @@ export default defineComponent({
   `,
   setup() {
     const store = useStore()
-    const canProceed = computed(() => !!store.state.ratio && !!store.state.background)
+    const canProceed = computed(() => !!store.state.ratio)
     return { canProceed }
   }
 })
